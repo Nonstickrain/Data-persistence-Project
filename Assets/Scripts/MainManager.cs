@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.IO;
 
 public class MainManager : MonoBehaviour
 {
@@ -11,10 +12,12 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text BestScoreText;
     public GameObject GameOverText;
     
     private bool m_Started = false;
     private int m_Points;
+    public static int bestScore = 0;
     
     private bool m_GameOver = false;
 
@@ -40,6 +43,7 @@ public class MainManager : MonoBehaviour
 
     private void Update()
     {
+        BestScoreText.text = "Best score: " + bestScore;
         if (!m_Started)
         {
             if (Input.GetKeyDown(KeyCode.Space))
@@ -65,12 +69,41 @@ public class MainManager : MonoBehaviour
     void AddPoint(int point)
     {
         m_Points += point;
+        if (m_Points >= bestScore)
+        {
+            bestScore = m_Points;
+        }
         ScoreText.text = $"Score : {m_Points}";
     }
-
     public void GameOver()
     {
         m_GameOver = true;
+        SaveScore();
         GameOverText.SetActive(true);
+    }
+    class SaveData
+    {
+        public int saveBestScore;
+    }
+    public void SaveScore()
+    {
+        SaveData data = new SaveData();
+        data.saveBestScore = bestScore;
+
+        string json = JsonUtility.ToJson(data);
+
+        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+    }
+
+    public static void LoadScore()
+    {
+        string path = Application.persistentDataPath + "/savefile.json";
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+
+            bestScore = data.saveBestScore;
+        }
     }
 }
